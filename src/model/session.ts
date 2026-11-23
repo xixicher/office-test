@@ -1,9 +1,11 @@
-import { questions, type Answer } from './quiz'
-import { isAnswer, scoreAnswers, type Result } from './scoring'
+import { questions, type Answer } from './quiz.ts'
+import { isAnswer, scoreAnswers, type Result } from './scoring.ts'
 
 export type Draft = { index: number; answers: (Answer | null)[] }
 export type Route = { view: 'home' | 'quiz' | 'reveal' } | { view: 'result'; result: Result }
 const draftKey = 'office-mood-lab:draft:v1'
+const originalResultPrefix = '#result='
+export const resultPrefix = '#result-v2='
 
 export function blankDraft(): Draft {
   return { index: 0, answers: questions.map(() => null) }
@@ -38,11 +40,12 @@ export function storeDraft(draft: Draft) {
   }
 }
 
-export function readRoute(): Route {
-  const hash = window.location.hash
+export function readRoute(hash = window.location.hash): Route {
   if (hash === '#test') return { view: 'quiz' }
-  if (hash.startsWith('#result=')) {
-    const result = scoreAnswers(hash.slice('#result='.length))
+  const isOriginal = hash.startsWith(originalResultPrefix)
+  if (isOriginal || hash.startsWith(resultPrefix)) {
+    const prefix = isOriginal ? originalResultPrefix : resultPrefix
+    const result = scoreAnswers(hash.slice(prefix.length), isOriginal ? 'original' : 'expanded')
     if (result) return { view: 'result', result }
   }
   return { view: 'home' }

@@ -5,7 +5,7 @@ import { Quiz } from './components/Quiz'
 import { Result, Reveal } from './components/Result'
 import { questions, type Answer } from './model/quiz'
 import { scoreAnswers } from './model/scoring'
-import { blankDraft, readDraft, readRoute, storeDraft, type Route } from './model/session'
+import { blankDraft, readDraft, readRoute, resultPrefix, storeDraft, type Route } from './model/session'
 
 export function App() {
   const [route, setRoute] = useState(readRoute)
@@ -46,7 +46,7 @@ export function App() {
     }
     const delay = matchMedia('(prefers-reduced-motion: reduce)').matches ? 30 : 1100
     const timer = window.setTimeout(() => {
-      window.history.replaceState(null, '', `#result=${result.code}`)
+      window.history.replaceState(null, '', resultPrefix + result.code)
       setRoute({ view: 'result', result })
       setDraft(blankDraft())
     }, delay)
@@ -106,7 +106,7 @@ export function App() {
         onPrevious={() => setDraft((current) => ({ ...current, index: Math.max(0, current.index - 1) }))} />}
       {route.view === 'reveal' && <Reveal />}
       {route.view === 'result' && (
-        <Result key={route.result.code} result={route.result} onRestart={() => {
+        <Result key={`${route.result.profileId}-${route.result.code}`} result={route.result} onRestart={() => {
           setDraft(blankDraft())
           start()
         }} />

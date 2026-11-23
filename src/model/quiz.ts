@@ -1,7 +1,7 @@
 export const letters = ['A', 'B', 'C', 'D'] as const
 export type Answer = (typeof letters)[number]
 
-export const profiles = {
+const basicProfiles = {
   clear: {
     name: '人间清醒型',
     character: '边界感猫猫',
@@ -94,8 +94,111 @@ export const profiles = {
   },
 } as const
 
-export type ProfileId = keyof typeof profiles
-export const profileIds = Object.keys(profiles) as ProfileId[]
+const mixedProfiles = {
+  planner: {
+    name: '工位规划师型',
+    character: '排期松鼠',
+    quote: '先把周五留出来，再谈这周能做多少。',
+    traits: ['擅长排期', '守住边界', '会留余量'],
+    summary: '项目群刚建好，你已经在日历上标出了交付日、确认日和最容易拖延的那一天。遇到临时加需求，你会问「那原来排好的哪一件往后挪？」',
+    strength: '能把大家对时间的模糊期待变成有顺序、有交接人的计划。',
+    blindSpot: '把每小时都安排好之后，容易低估别人需要的思考时间，也容易忘记自己会被打断。',
+    tip: '排下周任务时留出一个空档。把它当成处理临时变化的时间，不提前塞任务。',
+    partner: 'translator',
+    chemistry: '对方帮你把需求问明白，你顺手给它排上一个大家都能做到的交付日。',
+    primary: 'clear',
+    secondary: 'driven',
+    paper: '#e1f1e7',
+    ink: '#28513f',
+  },
+  standby: {
+    name: '静音待机型',
+    character: '耳机刺猬',
+    quote: '消息收到了，先让我把这一段做完。',
+    traits: ['专注做事', '低调回应', '节奏自定'],
+    summary: '你最喜欢耳机一戴、消息静音、安稳做完一件事的那段时间。群里聊了几十条，你会等讨论告一段落再出现，然后交上一份已经改好的文件。',
+    strength: '在信息很多的时候还能集中注意力，适合需要连续思考的任务。',
+    blindSpot: '一直安静到交稿时，合作的人可能不知道你已经开始，也不知道哪里需要帮忙。',
+    tip: '给常合作的同事留一句「我在专注处理，四点回来看消息」。紧急事项单独约定一个联系渠道。',
+    partner: 'planner',
+    chemistry: '对方提前讲清截止时间，你就能把大块时间用在真正需要专注的工作上。',
+    primary: 'checkedOut',
+    secondary: 'zen',
+    paper: '#f5e5ed',
+    ink: '#5f3c51',
+  },
+  alchemist: {
+    name: '流程炼金师型',
+    character: '自动化浣熊',
+    quote: '这一排按钮，我想让它只剩一个。',
+    traits: ['擅长自动化', '爱找规律', '减少返工'],
+    summary: '得知三个人每周都在复制同一张表，你第一反应是把那几步做成一个小工具。你愿意多花半小时把流程跑通，前提是下周同事真的可以少点几次鼠标。',
+    strength: '能把隐形的重复劳动变成大家都能用的捷径，并看得出哪些改动能省下最多时间。',
+    blindSpot: '工具一旦自己用顺手了，就容易忘记同事可能连输入文件要放哪儿都不知道。',
+    tip: '交出一个小工具前，找没看过它的同事走一遍。看对方在哪一步停住，再补那一步的提示。',
+    partner: 'firefighter',
+    chemistry: '对方清楚哪一处总出故障，你擅长把反复发生的问题变成一次性的修复。',
+    primary: 'efficient',
+    secondary: 'clear',
+    paper: '#e9e9fa',
+    ink: '#414779',
+  },
+  firefighter: {
+    name: '救火队长型',
+    character: '接球海狸',
+    quote: '先告诉我哪儿冒烟，其他的等会儿说。',
+    traits: ['临场反应快', '能接急活', '会稳场面'],
+    summary: '临交稿才发现文件打不开，你已经在找备份了。群里还在争谁改了最后一版，你会先叫一个人恢复文件、另一个人回客户，等交付稳住再一起查原因。',
+    strength: '情况混乱时能迅速分清先后，也能让合作的人知道此刻各自该做什么。',
+    blindSpot: '救过几次急以后，别人容易默认你会一直兜底。你也可能顾不上检查这类事为什么总发生。',
+    tip: '急事收尾后，花十分钟写下最早出现的一个信号和下次负责处理的人。给自己的排期也留出缓冲。',
+    partner: 'alchemist',
+    chemistry: '你知道什么地方最容易断，对方乐意把补救办法做成人人都能用的流程。',
+    primary: 'driven',
+    secondary: 'calm',
+    paper: '#ffeadb',
+    ink: '#713e29',
+  },
+  translator: {
+    name: '需求翻译官型',
+    character: '对齐小象',
+    quote: '把「看起来高级一点」翻译成三条能改的事。',
+    traits: ['听得出重点', '善于对齐', '表达具体'],
+    summary: '同一场会上，产品说「要快」，设计说「要完整」，你会先问他们各自最担心什么。会议结束前，你通常会把大家同意的内容写成三条，免得群聊再开第二场会。',
+    strength: '能把含糊的反馈整理成可执行的改动，也能及时发现大家对同一句话的不同理解。',
+    blindSpot: '为了让每个人都点头，偶尔会把一个需要拍板的问题留成了讨论题。',
+    tip: '下次对齐需求时，结尾只确认三件事。谁负责、做到什么算完、什么时候回来确认。',
+    partner: 'planner',
+    chemistry: '你把各方的意思翻译成一份清楚的任务，对方把时间和交接安排好。',
+    primary: 'calm',
+    secondary: 'clear',
+    paper: '#fff0ce',
+    ink: '#635019',
+  },
+  endurance: {
+    name: '长线续航型',
+    character: '沙漏小龟',
+    quote: '今天交一小段，月底就有一整篇。',
+    traits: ['稳定推进', '耐得住长跑', '会拆里程碑'],
+    summary: '别人看到三个月后的截止日，你会先把第一周能做完的部分写进日历。项目中途变了方向，你也习惯找一个可以继续推进的环节，慢慢把节奏接回来。',
+    strength: '擅长把跨度长、反馈慢的工作拆成看得见的阶段，进度既稳定又能交代。',
+    blindSpot: '你习惯稳定推进，关键节点的阻塞有时会处理得太晚。队友也未必知道你已经走到哪一步。',
+    tip: '给长项目设一个每周固定的更新点。用三句话写清本周交付、下周计划和需要谁来帮忙。',
+    partner: 'driven',
+    chemistry: '对方擅长在关键节点加速，你擅长把加速之后剩下的活稳稳接住。',
+    primary: 'zen',
+    secondary: 'driven',
+    paper: '#e3f1f5',
+    ink: '#295568',
+  },
+} as const
+
+export const profiles = { ...basicProfiles, ...mixedProfiles }
+export type ProfileId = keyof typeof basicProfiles
+export type ResultProfileId = keyof typeof profiles
+export const profileIds = Object.keys(basicProfiles) as ProfileId[]
+export const mixedProfileIds = Object.keys(mixedProfiles) as (keyof typeof mixedProfiles)[]
+export const resultProfileIds = Object.keys(profiles) as ResultProfileId[]
 
 type Question = {
   prompt: string

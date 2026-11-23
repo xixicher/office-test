@@ -1,7 +1,7 @@
 import { ClipboardList, Clock3, Coffee, Fingerprint, Sparkles } from 'lucide-react'
 import { portraits } from '../assets'
 import office from '../assets/office.webp'
-import { profileIds, profiles, questions } from '../model/quiz'
+import { profiles, questions, resultProfileIds } from '../model/quiz'
 
 export function Home({ onStart, hasDraft }: { onStart: () => void; hasDraft: boolean }) {
   return (
@@ -33,12 +33,12 @@ export function Home({ onStart, hasDraft }: { onStart: () => void; hasDraft: boo
       <section className="lineup" id="profiles" aria-labelledby="profiles-title">
         <div className="section-heading">
           <h2 id="profiles-title">认识你的职场同类</h2>
-          <span>{profileIds.length} 种职场本体</span>
+          <span>{resultProfileIds.length} 种职场本体</span>
         </div>
         <ul className="profiles-grid">
-          {profileIds.map((id) => (
+          {resultProfileIds.map((id) => (
             <li className="profile-preview" key={id}>
-              <img src={portraits[id]} alt="" width={512} height={512} />
+              <img src={portraits[id]} alt="" width={512} height={512} loading="lazy" />
               <div>
                 <h3>{profiles[id].name}</h3>
                 <p>{profiles[id].character}</p>

@@ -83,6 +83,7 @@ function ShareCard({ result }: { result: QuizResult }) {
 export function Result({ result, onRestart }: { result: QuizResult; onRestart: () => void }) {
   const profile = profiles[result.profileId]
   const partner = profiles[profile.partner]
+  const primary = 'primary' in profile ? profile.primary : result.profileId
   const [copyStatus, setCopyStatus] = useState('')
   const codeText = useRef<HTMLElement>(null)
   const color = { '--paper': profile.paper, '--ink': profile.ink } as CSSProperties
@@ -158,11 +159,14 @@ export function Result({ result, onRestart }: { result: QuizResult; onRestart: (
         </div>
         <div className="report-side">
           <section className="report-panel scores">
-            <h2><BarChart3 size={21} aria-hidden="true" /> 六类人格得分</h2>
+            <h2><BarChart3 size={21} aria-hidden="true" /> 职场风格得分</h2>
             <p>每题计 1 分，共 {questions.length} 分。</p>
+            {'secondary' in profile && (
+              <p>你的结果结合了「{profiles[profile.primary].name}」和「{profiles[profile.secondary].name}」两种风格。</p>
+            )}
             <ul>
               {profileIds.map((id) => (
-                <li key={id} className={id === result.profileId ? 'winning-score' : ''}>
+                <li key={id} className={id === primary ? 'winning-score' : ''}>
                   <span>{profiles[id].name}</span>
                   <div className="score-track" aria-hidden="true">
                     <span style={{ width: `${result.scores[id] / questions.length * 100}%`, background: profiles[id].bar }} />

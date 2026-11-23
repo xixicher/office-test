@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { scoreAnswers } from '../src/model/scoring.ts'
-import type { ProfileId } from '../src/model/quiz.ts'
+import { readRoute, resultPrefix } from '../src/model/session.ts'
+import type { ProfileId, ResultProfileId } from '../src/model/quiz.ts'
 
 test('six distinct combinations produce all six profiles', () => {
   const codes = {
@@ -13,7 +14,7 @@ test('six distinct combinations produce all six profiles', () => {
     ADDDDA: 'zen',
   }
   for (const [code, expected] of Object.entries(codes)) {
-    const result = scoreAnswers(code)
+    const result = scoreAnswers(code, 'original')
     assert.equal(result?.profileId, expected)
     assert.equal(result?.code, code)
     assert.equal(Object.values(result!.scores).reduce((sum, value) => sum + value, 0), 6)
@@ -21,7 +22,7 @@ test('six distinct combinations produce all six profiles', () => {
 })
 
 test('the last choice breaks a tie if it belongs to a highest-scoring profile', () => {
-  assert.deepEqual(scoreAnswers('ACDBCA'), {
+  assert.deepEqual(scoreAnswers('ACDBCA', 'original'), {
     code: 'ACDBCA',
     profileId: 'clear',
     scores: { clear: 2, checkedOut: 0, efficient: 1, driven: 0, calm: 2, zen: 1 },
@@ -29,17 +30,17 @@ test('the last choice breaks a tie if it belongs to a highest-scoring profile', 
 })
 
 test('tie-breaking skips later choices outside the set of tied leaders', () => {
-  assert.deepEqual(scoreAnswers('ACCAAD'), {
+  assert.deepEqual(scoreAnswers('ACCAAD', 'original'), {
     code: 'ACCAAD',
     profileId: 'clear',
     scores: { clear: 2, checkedOut: 1, efficient: 0, driven: 1, calm: 2, zen: 0 },
   })
-  assert.equal(scoreAnswers('ACCADC')?.profileId, 'clear')
-  assert.equal(scoreAnswers('AAACAD')?.profileId, 'clear')
+  assert.equal(scoreAnswers('ACCADC', 'original')?.profileId, 'clear')
+  assert.equal(scoreAnswers('AAACAD', 'original')?.profileId, 'clear')
 })
 
 test('a six-way tie selects the sixth answer', () => {
-  const result = scoreAnswers('BADCBC')
+  const result = scoreAnswers('BADCBC', 'original')
   assert.equal(result?.profileId, 'efficient')
   assert.deepEqual(Object.values(result!.scores), [1, 1, 1, 1, 1, 1])
 })
@@ -47,10 +48,38 @@ test('a six-way tie selects the sixth answer', () => {
 test('incomplete or malformed combinations do not produce a report', () => {
   for (const code of ['', 'ABCD', 'AAAAAAA', 'AAAAAE', 'aaaaaa', 'AAAAA ', 'AAAAA\n', 'ＡAAAAA']) {
     assert.equal(scoreAnswers(code), null)
+    assert.equal(scoreAnswers(code, 'original'), null)
   }
 })
 
-test('all 4,096 answer combinations match the approved mapping and are deterministic', () => {
+test('each of the twelve results is reachable through a six-answer combination', () => {
+  const codes = {
+    AAAAAA: 'clear', AAABAB: 'checkedOut', AAACCC: 'efficient',
+    AAABBD: 'driven', ABACCD: 'calm', AAADDB: 'zen',
+    AAAAAD: 'planner', AADDAB: 'standby', AAABAC: 'alchemist',
+    AABCCD: 'firefighter', AAACCB: 'translator', ABADDD: 'endurance',
+  } satisfies Record<string, ResultProfileId>
+  for (const [code, expected] of Object.entries(codes)) {
+    assert.equal(scoreAnswers(code)?.profileId, expected)
+  }
+})
+
+test('old result links retain their original result and new links use expanded scoring', () => {
+  assert.deepEqual(readRoute('#result=AAAAAD'), {
+    view: 'result',
+    result: scoreAnswers('AAAAAD', 'original'),
+  })
+  assert.deepEqual(readRoute(resultPrefix + 'AAAAAD'), {
+    view: 'result',
+    result: scoreAnswers('AAAAAD'),
+  })
+  assert.equal(scoreAnswers('AAAAAD', 'original')?.profileId, 'clear')
+  assert.equal(scoreAnswers('AAAAAD')?.profileId, 'planner')
+  assert.deepEqual(readRoute(resultPrefix + 'AAAAAE'), { view: 'home' })
+  assert.deepEqual(readRoute(resultPrefix + 'AAA'), { view: 'home' })
+})
+
+test('all 4,096 answer combinations match both scoring versions', () => {
   const mapping: readonly (readonly ProfileId[])[] = [
     ['clear', 'checkedOut', 'efficient', 'driven'],
     ['clear', 'checkedOut', 'calm', 'zen'],
@@ -59,6 +88,14 @@ test('all 4,096 answer combinations match the approved mapping and are determini
     ['checkedOut', 'driven', 'calm', 'zen'],
     ['clear', 'checkedOut', 'efficient', 'driven'],
   ]
+  const mixedResults: Record<string, ResultProfileId> = {
+    'clear/driven': 'planner',
+    'checkedOut/zen': 'standby',
+    'efficient/clear': 'alchemist',
+    'driven/calm': 'firefighter',
+    'calm/clear': 'translator',
+    'zen/driven': 'endurance',
+  }
   for (let number = 0; number < 4 ** mapping.length; number += 1) {
     const digits = [...number.toString(4).padStart(mapping.length, '0')].map(Number)
     const code = digits.map((digit) => 'ABCD'[digit]).join('')
@@ -68,7 +105,10 @@ test('all 4,096 answer combinations match the approved mapping and are determini
     const ranked = [...new Set(picks)].sort((a, b) =>
       counts[b] - counts[a] || picks.lastIndexOf(b) - picks.lastIndexOf(a),
     )
-    const expected = { code, scores: counts, profileId: ranked[0] }
+    const [primary, secondary] = ranked
+    assert.deepEqual(scoreAnswers(code, 'original'), { code, scores: counts, profileId: primary })
+    const expanded = mixedResults[`${primary}/${secondary}`] ?? primary
+    const expected = { code, scores: counts, profileId: expanded }
     assert.deepEqual(scoreAnswers(code), expected)
     assert.deepEqual(scoreAnswers(code), expected)
   }
