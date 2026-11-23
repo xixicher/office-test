@@ -97,7 +97,7 @@ export function App() {
           </a>
           <div className="header-right">
             {route.view === 'home' && <a className="header-link" href="#profiles">职场档案</a>}
-            <span className="edition">内部体验版</span>
+            <span className="edition">正式版</span>
           </div>
         </div>
       </header>
